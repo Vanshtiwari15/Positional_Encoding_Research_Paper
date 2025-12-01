@@ -1,0 +1,61 @@
+experiment_name: learned_positional_encoding
+status: completed
+
+objective: >
+  Evaluate the effect of learned (trainable) positional embeddings on
+  Transformer optimization behavior in a low-resource machine translation
+  setting.
+
+dataset:
+  name: OPUS Books
+  language_pair: de-en
+  train_samples: 2000
+  validation_samples: 500
+  tokenization: Helsinki-NLP/opus-mt-de-en
+
+model:
+  architecture: Transformer (encoder-decoder)
+  implementation: torch.nn.Transformer
+  d_model: 512
+  nhead: 8
+  encoder_layers: 4
+  decoder_layers: 4
+  feedforward_dim: 2048
+  dropout: 0.1
+
+positional_encoding:
+  type: learned
+  trainable: true
+  max_length: 5000
+
+training:
+  epochs: 3
+  batch_size: 32
+  optimizer: AdamW
+  learning_rate: 0.0003
+  loss_function: CrossEntropyLoss
+  ignore_padding_index: true
+  device: cuda
+
+evaluation:
+  metric: cross_entropy_loss
+  evaluation_strategy: validation_loss_per_epoch
+  bleu_used: false
+  reason_bleu_not_used: >
+    BLEU scores were unstable for scratch-trained models under
+    extremely low-resource conditions.
+
+results:
+  final_train_loss: 5.8284
+  final_validation_loss: 5.8113
+  convergence_behavior: stable
+  overfitting_observed: no
+
+artifacts:
+  loss_curve: results/plots/learned_loss.png
+  loss_log: results/logs/learned_losses.json
+
+notes:
+  - Learned positional embeddings did not outperform sinusoidal embeddings.
+  - Optimization behavior was nearly identical to fixed positional encoding.
+  - Suggests limited benefit of additional positional parameters in low-data regimes.

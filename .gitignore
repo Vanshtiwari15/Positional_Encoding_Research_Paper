@@ -1,0 +1,15 @@
+!cat << EOF > .gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+venv/
+.env/
+
+.ipynb_checkpoints/
+
+*.parquet
+.DS_Store
+Thumbs.db
+EOF

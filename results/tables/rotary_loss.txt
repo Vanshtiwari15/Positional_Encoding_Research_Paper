@@ -1,0 +1,2 @@
+Final Train Loss: 5.8420
+Final Val Loss: 5.8576
