@@ -13,3 +13,9 @@ venv/
 .DS_Store
 Thumbs.db
 EOF
+
+# Ignore PyTorch model weights
+*.pth
+
+# Or ignore specific file
+model.pth

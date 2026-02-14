@@ -1,5 +1,10 @@
 import json
+import os
 import matplotlib.pyplot as plt
+
+
+# CONFIG
+DATASET_NAME = "de-en"   # change when needed
 
 
 def load_losses(path):
@@ -8,32 +13,55 @@ def load_losses(path):
     return data["train"], data["val"]
 
 
-# -------- Load loss logs --------
-sin_train, sin_val = load_losses("results/logs/sinusoidal_losses.json")
-learnt_train, learnt_val = load_losses("results/logs/learned_losses.json")
-rot_train, rot_val = load_losses("results/logs/rotary_losses.json")
+base_path = f"results/{DATASET_NAME}"
+
+# Load losses
+sin_train, sin_val = load_losses(
+    f"{base_path}/sinusoidal/losses.json"
+)
+
+learned_train, learned_val = load_losses(
+    f"{base_path}/learned/losses.json"
+)
+
+rot_train, rot_val = load_losses(
+    f"{base_path}/rotary/losses.json"
+)
 
 epochs = range(1, len(sin_train) + 1)
 
-# -------- Plot --------
+# Plot
 plt.figure(figsize=(8, 6))
 
-# Training losses
-plt.plot(epochs, sin_train, marker="o", linestyle="--", label="Sinusoidal (Train)")
-plt.plot(epochs, learnt_train, marker="o", linestyle="--", label="Learned (Train)")
-plt.plot(epochs, rot_train, marker="o", linestyle="--", label="Rotary (Train)")
+# Training losses (dashed)
+plt.plot(epochs, sin_train, linestyle="--", marker="o",
+         label="Sinusoidal (Train)")
+plt.plot(epochs, learned_train, linestyle="--", marker="o",
+         label="Learned (Train)")
+plt.plot(epochs, rot_train, linestyle="--", marker="o",
+         label="Rotary (Train)")
 
-# Validation losses
-plt.plot(epochs, sin_val, marker="s", label="Sinusoidal (Val)")
-plt.plot(epochs, learnt_val, marker="s", label="Learned (Val)")
-plt.plot(epochs, rot_val, marker="s", label="Rotary (Val)")
+# Validation losses (solid)
+plt.plot(epochs, sin_val, marker="s",
+         label="Sinusoidal (Val)")
+plt.plot(epochs, learned_val, marker="s",
+         label="Learned (Val)")
+plt.plot(epochs, rot_val, marker="s",
+         label="Rotary (Val)")
 
 plt.xlabel("Epoch")
 plt.ylabel("Loss")
-plt.title("Training and Validation Loss vs Epochs")
+plt.title(f"Training & Validation Loss Comparison ({DATASET_NAME})")
 plt.legend()
 plt.grid(True)
-
 plt.tight_layout()
-plt.savefig("results/plots/loss_comparison.png", dpi=300)
+
+# Save globally
+os.makedirs("results/plots", exist_ok=True)
+
+plt.savefig(
+    f"results/plots/{DATASET_NAME}_loss_comparison.png",
+    dpi=300
+)
+
 plt.show()
