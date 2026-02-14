@@ -1,123 +1,165 @@
-Positional Encoding in Low-Resource Transformer Training
+# 📐 Positional Encoding in Low-Resource Transformer Training
 
-This repository contains the implementation and experiments for the paper:
+[![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-Deep%20Learning-red.svg)](https://pytorch.org/)
+[![Transformer](https://img.shields.io/badge/Model-Encoder--Decoder-orange.svg)]()
+[![Research](https://img.shields.io/badge/Type-Empirical%20Study-purple.svg)]()
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)]()
 
-How Do Positional Encodings Affect Transformer Training in Low-Resource Settings? 
+> A controlled empirical study analyzing how different positional encoding strategies affect Transformer optimization under extreme low-resource training conditions.
 
-positional_encoding_low_resource
+---
 
-Overview
+## 🌟 Overview
 
-Transformers require positional encodings to model token order. While most prior studies evaluate positional encoding strategies in large-scale training regimes, this project investigates their behavior under extreme low-resource conditions.
+Transformers require positional encodings to model token order. Most research evaluates these mechanisms in large-scale settings.  
 
-We train a standard encoder–decoder Transformer from scratch on a small German–English dataset while varying only the positional encoding mechanism.
+This project studies their behavior under **extreme low-resource conditions (2,000 training examples)**.
 
-The goal is to study optimization behavior, not final translation quality.
+We implement a standard encoder–decoder Transformer from scratch and compare:
 
-Positional Encoding Variants Compared
+- Sinusoidal Positional Encoding
+- Learned Absolute Positional Embeddings
+- Rotary Positional Encoding (RoPE)
 
-Sinusoidal Positional Encoding (fixed, non-trainable)
+All experiments keep architecture and hyperparameters identical.
 
-Learned Absolute Positional Embeddings
+---
 
-Rotary Positional Encoding (RoPE)
+## 🔬 Research Question
 
-All other architectural and training settings are kept identical.
+Does increasing positional encoding complexity improve optimization when data is severely limited?
 
-Experimental Setup
-Dataset
+---
 
-OPUS Books (German–English)
+## 🧠 Experimental Setup
 
-Restricted to 2,000 sentence pairs
+### 📚 Dataset
+- OPUS Books (German–English)
+- 2,000 sentence pairs
+- Max sequence length: 64
+- Marian tokenizer (Helsinki-NLP/opus-mt-de-en)
 
-Maximum sequence length: 64 tokens
+### ⚙️ Model Configuration
+- Encoder–Decoder Transformer
+- 4 layers (encoder & decoder)
+- Model dimension: 512
+- 8 attention heads
+- Feedforward dimension: 2048
+- Dropout: 0.1
+- Optimizer: AdamW
+- Learning rate: 3e-4
+- Batch size: 32
+- Epochs: 3
 
-Marian tokenizer (Helsinki-NLP/opus-mt-de-en)
+### 📊 Evaluation
+- Training Cross-Entropy Loss
+- Validation Cross-Entropy Loss
+- BLEU not used due to instability in low-resource regime
 
-Model Configuration
+---
 
-Encoder–Decoder Transformer
+## 📈 Results
 
-4 layers (encoder & decoder)
+| Positional Encoding | Train Loss | Validation Loss |
+|---------------------|------------|-----------------|
+| Sinusoidal          | 5.8132     | 5.8166          |
+| Learned             | 5.8284     | 5.8113          |
+| Rotary              | 5.8420     | 5.8576          |
 
-Model dimension: 512
+### Key Findings
 
-8 attention heads
+- Learned embeddings show no advantage over sinusoidal encoding.
+- Rotary encoding converges more slowly in low-resource settings.
+- Simpler encodings are sufficient under extreme data constraints.
 
-Feedforward dimension: 2048
+---
 
-Dropout: 0.1
+## 🏗️ Architecture
 
-Optimizer: AdamW
+The model follows a standard encoder–decoder Transformer architecture.
 
-Learning rate: 3e-4
+### 🔹 Input Processing
+Input Sentence (German)
+↓
+Tokenization
+↓
+Token Embeddings
+↓
 
-Batch size: 32
-
-Training epochs: 3
-
-Evaluation
-
-Cross-entropy loss (training & validation)
-
-BLEU not used due to instability in low-resource regime
-
-Results
-
-Final loss after 3 epochs:
-
-Positional Encoding	Train Loss	Validation Loss
-Sinusoidal	5.8132	5.8166
-Learned	5.8284	5.8113
-Rotary	5.8420	5.8576
-Key Findings
-
-Learned positional embeddings show no advantage over sinusoidal encoding.
-
-Rotary encoding converges more slowly and results in higher validation loss.
-
-Under extreme data constraints, simpler positional encodings are sufficient.
-
-Repository Structure
-├── main.py
-├── plots_losses.py
-├── results/
-│   ├── logs/
-│   ├── plots/
-│   └── tables/
-├── .gitignore
-└── README.md
-
-How to Run
-1. Install dependencies
-pip install torch transformers matplotlib
-
-2. Train model
-python main.py
-
-3. Generate plots
-python plots_losses.py
+Positional Encoding (Sinusoidal / Learned / Rotary)
 
 
-Results will be saved in the results/ directory.
+Maximum sequence length (context window): **64 tokens**
 
-Limitations
+All tokens within this context window attend to each other via self-attention.
 
-Single dataset (German–English)
+---
 
-Very small training size (2,000 pairs)
+### 🔹 Encoder
+[ Self-Attention ]
+↓
+[ Add & LayerNorm ]
+↓
+[ Feedforward Network ]
+↓
+[ Add & LayerNorm ]
 
-Only 3 epochs
 
-Evaluation based solely on cross-entropy loss
+- 4 stacked encoder layers  
+- Model dimension: 512  
+- 8 attention heads  
+- Full attention within the 64-token context window  
 
-Conclusion
+Each token attends to all other tokens in the input sequence.
 
-Under extreme low-resource training, positional encoding complexity does not improve early optimization. Simpler absolute positional encodings are sufficient, and more expressive methods may require larger datasets or longer training.
+---
 
-Citation
+### 🔹 Decoder
+Target Tokens (shifted right)
+↓
+Masked Self-Attention (causal)
+↓
+Cross-Attention (attends to encoder outputs)
+↓
+Feedforward Network
 
-If you use this work, please cite:
 
-Vansh Tiwari. How Do Positional Encodings Affect Transformer Training in Low-Resource Settings?
+- 4 stacked decoder layers  
+- Causal masking ensures tokens only attend to previous positions  
+- Cross-attention connects decoder to encoder representations  
+
+---
+
+### 🔹 Context Window Behavior
+
+- Maximum sequence length: **64**
+- Attention complexity: **O(n²)** within the window
+- No sparse or sliding-window attention
+- Rotary encoding (when used) modifies query/key vectors inside attention
+
+---
+
+### 🔹 Output
+
+
+
+Decoder Hidden States
+↓
+Linear Projection
+↓
+Softmax
+↓
+Next-Token Probability Distribution
+
+
+Training objective: **Cross-Entropy Loss**
+
+---
+
+### 🔬 Positional Encoding Injection
+
+- Sinusoidal / Learned → added to token embeddings
+- Rotary → applied directly inside attention mechanism
+
+All other architectural components remain identical across experiments.
